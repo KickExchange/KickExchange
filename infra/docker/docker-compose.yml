@@ -1,0 +1,15 @@
+name: kickexchange
+
+services:
+  matching-engine:
+    build:
+      context: ../../services/matching-engine
+    container_name: matching-engine
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+    networks:
+      - exchange-network
+
+networks:
+  exchange-network:
