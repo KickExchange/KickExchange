@@ -30,4 +30,9 @@ export interface PlayerPreview {
   externalId: string;
   name: string;
   marketValue: number;
+  imageUrl: string;
+  position: string;
+  club: string;
+  nationalities: string[];
+  shirtNumber: string;
 }

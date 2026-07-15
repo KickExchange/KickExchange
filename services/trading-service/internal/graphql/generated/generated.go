@@ -51,9 +51,14 @@ type ComplexityRoot struct {
 	}
 
 	PlayerPreview struct {
-		ExternalID  func(childComplexity int) int
-		MarketValue func(childComplexity int) int
-		Name        func(childComplexity int) int
+		Club          func(childComplexity int) int
+		ExternalID    func(childComplexity int) int
+		ImageURL      func(childComplexity int) int
+		MarketValue   func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Nationalities func(childComplexity int) int
+		Position      func(childComplexity int) int
+		ShirtNumber   func(childComplexity int) int
 	}
 
 	Query struct {
@@ -164,12 +169,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.SubmitMarketOrder(childComplexity, args["assetId"].(uint64), args["side"].(model.Side), args["shares"].(int)), true
 
+	case "PlayerPreview.club":
+		if e.ComplexityRoot.PlayerPreview.Club == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.Club(childComplexity), true
 	case "PlayerPreview.externalId":
 		if e.ComplexityRoot.PlayerPreview.ExternalID == nil {
 			break
 		}
 
 		return e.ComplexityRoot.PlayerPreview.ExternalID(childComplexity), true
+	case "PlayerPreview.imageUrl":
+		if e.ComplexityRoot.PlayerPreview.ImageURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.ImageURL(childComplexity), true
 	case "PlayerPreview.marketValue":
 		if e.ComplexityRoot.PlayerPreview.MarketValue == nil {
 			break
@@ -182,6 +199,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.PlayerPreview.Name(childComplexity), true
+	case "PlayerPreview.nationalities":
+		if e.ComplexityRoot.PlayerPreview.Nationalities == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.Nationalities(childComplexity), true
+	case "PlayerPreview.position":
+		if e.ComplexityRoot.PlayerPreview.Position == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.Position(childComplexity), true
+	case "PlayerPreview.shirtNumber":
+		if e.ComplexityRoot.PlayerPreview.ShirtNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.ShirtNumber(childComplexity), true
 
 	case "Query.health":
 		if e.ComplexityRoot.Query.Health == nil {
@@ -379,6 +414,11 @@ type PlayerPreview {
   externalId: String!
   name: String!
   marketValue: Int!
+  imageUrl: String!
+  position: String!
+  club: String!
+  nationalities: [String!]!
+  shirtNumber: String!
 }
 
 type Query {
@@ -428,6 +468,16 @@ func (ec *executionContext) childFields_PlayerPreview(ctx context.Context, field
 		return ec.fieldContext_PlayerPreview_name(ctx, field)
 	case "marketValue":
 		return ec.fieldContext_PlayerPreview_marketValue(ctx, field)
+	case "imageUrl":
+		return ec.fieldContext_PlayerPreview_imageUrl(ctx, field)
+	case "position":
+		return ec.fieldContext_PlayerPreview_position(ctx, field)
+	case "club":
+		return ec.fieldContext_PlayerPreview_club(ctx, field)
+	case "nationalities":
+		return ec.fieldContext_PlayerPreview_nationalities(ctx, field)
+	case "shirtNumber":
+		return ec.fieldContext_PlayerPreview_shirtNumber(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type PlayerPreview", field.Name)
 }
@@ -1004,6 +1054,121 @@ func (ec *executionContext) _PlayerPreview_marketValue(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_PlayerPreview_marketValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _PlayerPreview_imageUrl(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_imageUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ImageURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_imageUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PlayerPreview_position(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_position(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Position, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_position(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PlayerPreview_club(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_club(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Club, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_club(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PlayerPreview_nationalities(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_nationalities(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Nationalities, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_nationalities(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PlayerPreview_shirtNumber(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_shirtNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShirtNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_shirtNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2557,6 +2722,31 @@ func (ec *executionContext) _PlayerPreview(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "imageUrl":
+			out.Values[i] = ec._PlayerPreview_imageUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "position":
+			out.Values[i] = ec._PlayerPreview_position(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "club":
+			out.Values[i] = ec._PlayerPreview_club(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nationalities":
+			out.Values[i] = ec._PlayerPreview_nationalities(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shirtNumber":
+			out.Values[i] = ec._PlayerPreview_shirtNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3283,6 +3473,35 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNSubmitResult2kickexchangeᚋtradingᚑserviceᚋinternalᚋgraphqlᚋmodelᚐSubmitResult(ctx context.Context, sel ast.SelectionSet, v model.SubmitResult) graphql.Marshaler {

@@ -21,9 +21,14 @@ type Mutation struct {
 }
 
 type PlayerPreview struct {
-	ExternalID  string `json:"externalId"`
-	Name        string `json:"name"`
-	MarketValue int    `json:"marketValue"`
+	ExternalID    string   `json:"externalId"`
+	Name          string   `json:"name"`
+	MarketValue   int      `json:"marketValue"`
+	ImageURL      string   `json:"imageUrl"`
+	Position      string   `json:"position"`
+	Club          string   `json:"club"`
+	Nationalities []string `json:"nationalities"`
+	ShirtNumber   string   `json:"shirtNumber"`
 }
 
 type Query struct {

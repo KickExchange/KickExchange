@@ -9,6 +9,10 @@ const PREVIEW_QUERY = `
       externalId
       name
       marketValue
+      imageUrl
+      position
+      club
+      nationalities
     }
   }
 `;
@@ -102,19 +106,34 @@ export default function AddPlayerPage() {
         )}
 
         {preview && (
-          <div className="w-full rounded-xl border border-black/10 bg-white p-6 dark:border-white/15 dark:bg-zinc-900">
-            <p className="font-medium text-black dark:text-zinc-50">{preview.name}</p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              transfermarkt id {preview.externalId} - market value $
-              {(preview.marketValue / 1_000_000).toFixed(2)}m
-            </p>
-            <button
-              onClick={handleConfirm}
-              disabled={loading}
-              className="mt-4 rounded-full bg-foreground px-6 py-2 font-medium text-background hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
-            >
-              {loading ? "Adding..." : "Confirm - add to market"}
-            </button>
+          <div className="flex w-full items-center gap-4 rounded-xl border border-black/10 bg-white p-6 dark:border-white/15 dark:bg-zinc-900">
+            {preview.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview.imageUrl}
+                alt={preview.name}
+                className="h-16 w-16 rounded-full object-cover"
+              />
+            )}
+            <div className="flex-1">
+              <p className="font-medium text-black dark:text-zinc-50">{preview.name}</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                {[preview.position, preview.club, preview.nationalities.join(", ")]
+                  .filter(Boolean)
+                  .join(" - ")}
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                transfermarkt id {preview.externalId} - market value $
+                {(preview.marketValue / 1_000_000).toFixed(2)}m
+              </p>
+              <button
+                onClick={handleConfirm}
+                disabled={loading}
+                className="mt-4 rounded-full bg-foreground px-6 py-2 font-medium text-background hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+              >
+                {loading ? "Adding..." : "Confirm - add to market"}
+              </button>
+            </div>
           </div>
         )}
 

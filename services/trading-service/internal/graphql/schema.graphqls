@@ -23,6 +23,11 @@ type PlayerPreview {
   externalId: String!
   name: String!
   marketValue: Int!
+  imageUrl: String!
+  position: String!
+  club: String!
+  nationalities: [String!]!
+  shirtNumber: String!
 }
 
 type Query {

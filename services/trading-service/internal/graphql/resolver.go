@@ -81,8 +81,13 @@ func isNumericID(query string) bool {
 
 func toModelPlayerPreview(p transfermarkt.PlayerProfile) *model.PlayerPreview {
 	return &model.PlayerPreview{
-		ExternalID:  p.ExternalID,
-		Name:        p.Name,
-		MarketValue: int(p.MarketValue),
+		ExternalID:    p.ExternalID,
+		Name:          p.Name,
+		MarketValue:   int(p.MarketValue),
+		ImageURL:      p.ImageURL,
+		Position:      p.Position,
+		Club:          p.Club,
+		Nationalities: p.Nationalities,
+		ShirtNumber:   p.ShirtNumber,
 	}
 }

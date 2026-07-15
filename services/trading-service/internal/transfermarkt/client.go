@@ -14,9 +14,14 @@ import (
 var ErrPlayerNotFound = fmt.Errorf("transfermarkt: player not found")
 
 type PlayerProfile struct {
-	ExternalID  string
-	Name        string
-	MarketValue int64
+	ExternalID    string
+	Name          string
+	MarketValue   int64
+	ImageURL      string
+	Position      string
+	Club          string
+	Nationalities []string
+	ShirtNumber   string
 }
 
 type Client struct {
@@ -52,16 +57,35 @@ func (c *Client) GetPlayerProfile(ctx context.Context, externalID string) (Playe
 		ID          string `json:"id"`
 		Name        string `json:"name"`
 		MarketValue int64  `json:"marketValue"`
+		ImageURL    string `json:"imageUrl"`
+		ShirtNumber string `json:"shirtNumber"`
+		Position    struct {
+			Main string `json:"main"`
+		} `json:"position"`
+		Club struct {
+			Name string `json:"name"`
+		} `json:"club"`
+		Citizenship []string `json:"citizenship"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 		return PlayerProfile{}, fmt.Errorf("transfermarkt: decode response: %w", err)
 	}
 
-	return PlayerProfile{ExternalID: raw.ID, Name: raw.Name, MarketValue: raw.MarketValue}, nil
+	return PlayerProfile{
+		ExternalID:    raw.ID,
+		Name:          raw.Name,
+		MarketValue:   raw.MarketValue,
+		ImageURL:      raw.ImageURL,
+		Position:      raw.Position.Main,
+		Club:          raw.Club.Name,
+		Nationalities: raw.Citizenship,
+		ShirtNumber:   raw.ShirtNumber,
+	}, nil
 }
 
 // SearchPlayers looks players up by name, most relevant match first per
-// transfermarkt's own ranking.
+// transfermarkt's own ranking. The search endpoint returns less than the
+// profile endpoint - no image or shirt number.
 func (c *Client) SearchPlayers(ctx context.Context, name string) ([]PlayerProfile, error) {
 	reqURL := fmt.Sprintf("%s/players/search/%s?page_number=1", c.baseURL, url.PathEscape(name))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
@@ -84,6 +108,11 @@ func (c *Client) SearchPlayers(ctx context.Context, name string) ([]PlayerProfil
 			ID          string `json:"id"`
 			Name        string `json:"name"`
 			MarketValue int64  `json:"marketValue"`
+			Position    string `json:"position"`
+			Club        struct {
+				Name string `json:"name"`
+			} `json:"club"`
+			Nationalities []string `json:"nationalities"`
 		} `json:"results"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
@@ -92,7 +121,14 @@ func (c *Client) SearchPlayers(ctx context.Context, name string) ([]PlayerProfil
 
 	profiles := make([]PlayerProfile, len(raw.Results))
 	for i, r := range raw.Results {
-		profiles[i] = PlayerProfile{ExternalID: r.ID, Name: r.Name, MarketValue: r.MarketValue}
+		profiles[i] = PlayerProfile{
+			ExternalID:    r.ID,
+			Name:          r.Name,
+			MarketValue:   r.MarketValue,
+			Position:      r.Position,
+			Club:          r.Club.Name,
+			Nationalities: r.Nationalities,
+		}
 	}
 	return profiles, nil
 }
