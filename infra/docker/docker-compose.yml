@@ -18,6 +18,8 @@ services:
     environment:
       - ENGINE_HOST=matching-engine
       - ENGINE_PORT=9000
+    ports:
+      - "8080:8080"
     depends_on:
       - matching-engine
     restart: unless-stopped

@@ -11,6 +11,7 @@ type Config struct {
 	EnginePort        int
 	HeartbeatInterval time.Duration
 	ProtocolVersion   uint32
+	HTTPPort          int
 }
 
 func Load() Config {
@@ -19,6 +20,7 @@ func Load() Config {
 		EnginePort:        getEnvInt("ENGINE_PORT", 9000),
 		HeartbeatInterval: getEnvDuration("HEARTBEAT_INTERVAL", 5*time.Second),
 		ProtocolVersion:   uint32(getEnvInt("PROTOCOL_VERSION", 1)),
+		HTTPPort:          getEnvInt("HTTP_PORT", 8080),
 	}
 }
 
