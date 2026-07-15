@@ -13,20 +13,42 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 
+	"kickexchange/trading-service/internal/assets"
 	"kickexchange/trading-service/internal/config"
+	"kickexchange/trading-service/internal/db"
 	"kickexchange/trading-service/internal/engineclient"
 	graphqlapi "kickexchange/trading-service/internal/graphql"
 	"kickexchange/trading-service/internal/graphql/generated"
+	"kickexchange/trading-service/internal/pricefeed"
 )
 
 func main() {
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	cfg := config.Load()
 
-	client := engineclient.New(cfg, log)
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	if err := db.WaitAndMigrate(ctx, cfg, log); err != nil {
+		log.Error("failed to run migrations", "error", err)
+		os.Exit(1)
+	}
+
+	pool, err := db.NewPool(ctx, cfg)
+	if err != nil {
+		log.Error("failed to connect to postgres", "error", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	client := engineclient.New(cfg, log)
+
+	feed := pricefeed.New()
+	client.OnAsyncEvent(func(e engineclient.AsyncEvent) {
+		if e.Executed != nil {
+			feed.Publish(e.AssetID, float64(e.Executed.PriceTicks))
+		}
+	})
 
 	if err := client.Connect(ctx); err != nil {
 		if errors.Is(err, engineclient.ErrVersionMismatch) {
@@ -37,7 +59,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	resolver := graphqlapi.NewResolver(client, log)
+	assetsRepo := assets.NewRepository(pool)
+	resolver := graphqlapi.NewResolver(client, assetsRepo, feed, cfg, log)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
 	mux := http.NewServeMux()

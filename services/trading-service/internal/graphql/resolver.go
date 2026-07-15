@@ -1,26 +1,41 @@
 package graphql
 
+// This file will not be regenerated automatically.
+//
+// It serves as dependency injection for your app, add any dependencies you require
+// here.
+
 import (
-	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync/atomic"
 
+	"kickexchange/trading-service/internal/assets"
+	"kickexchange/trading-service/internal/config"
 	"kickexchange/trading-service/internal/engineclient"
-	"kickexchange/trading-service/internal/graphql/generated"
 	"kickexchange/trading-service/internal/graphql/model"
+	"kickexchange/trading-service/internal/pricefeed"
+	"kickexchange/trading-service/internal/transfermarkt"
 )
 
-// Resolver holds the dependencies every resolver method needs. Order IDs are
-// an in-memory counter for now - durable, DB-backed IDs land with Postgres.
 type Resolver struct {
 	Engine      engineclient.EngineClient
+	Assets      *assets.Repository
+	Transfer    *transfermarkt.Client
+	Feed        *pricefeed.Feed
 	Log         *slog.Logger
 	nextOrderID atomic.Uint64
 }
 
-func NewResolver(engine engineclient.EngineClient, log *slog.Logger) *Resolver {
-	return &Resolver{Engine: engine, Log: log}
+func NewResolver(engine engineclient.EngineClient, assetsRepo *assets.Repository, feed *pricefeed.Feed, cfg config.Config, log *slog.Logger) *Resolver {
+	return &Resolver{
+		Engine:   engine,
+		Assets:   assetsRepo,
+		Transfer: transfermarkt.New(cfg.TransfermarktAPIURL),
+		Feed:     feed,
+		Log:      log,
+	}
 }
 
 func toEngineSide(s model.Side) (engineclient.Side, error) {
@@ -34,42 +49,18 @@ func toEngineSide(s model.Side) (engineclient.Side, error) {
 	}
 }
 
-// SubmitMarketOrder is the resolver for the submitMarketOrder field.
-func (r *mutationResolver) SubmitMarketOrder(ctx context.Context, assetID uint64, side model.Side, shares int) (*model.SubmitResult, error) {
-	engineSide, err := toEngineSide(side)
-	if err != nil {
-		return nil, err
-	}
-
-	orderID := r.nextOrderID.Add(1)
-	result, err := r.Engine.SubmitMarket(assetID, engineclient.NewMarketPayload{
-		OrderID: orderID,
-		Side:    engineSide,
-		Shares:  int64(shares),
-	})
-
-	if result.Rejected != nil {
-		reason := result.Rejected.Reason.String()
-		return &model.SubmitResult{OrderID: orderID, Accepted: false, RejectReason: &reason}, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &model.SubmitResult{OrderID: orderID, Accepted: true}, nil
+// toSymbol derives a ticker-style symbol from a player's name since
+// transfermarkt doesn't provide one, e.g. "Lionel Messi" -> "LIONEL_MESSI".
+func toSymbol(name string) string {
+	return strings.ToUpper(strings.Join(strings.Fields(name), "_"))
 }
 
-// Health is the resolver for the health field.
-func (r *queryResolver) Health(ctx context.Context) (bool, error) {
-	return true, nil
+func toModelAsset(a assets.Asset) *model.Asset {
+	return &model.Asset{
+		AssetID:      a.AssetID,
+		ExternalID:   a.ExternalID,
+		Symbol:       a.Symbol,
+		DisplayName:  a.DisplayName,
+		InitialPrice: a.InitialPrice,
+	}
 }
-
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)

@@ -9,6 +9,14 @@ import (
 	"strconv"
 )
 
+type Asset struct {
+	AssetID      uint64  `json:"assetId"`
+	ExternalID   string  `json:"externalId"`
+	Symbol       string  `json:"symbol"`
+	DisplayName  string  `json:"displayName"`
+	InitialPrice float64 `json:"initialPrice"`
+}
+
 type Mutation struct {
 }
 
@@ -19,6 +27,9 @@ type SubmitResult struct {
 	OrderID      uint64  `json:"orderId"`
 	Accepted     bool    `json:"accepted"`
 	RejectReason *string `json:"rejectReason,omitempty"`
+}
+
+type Subscription struct {
 }
 
 type Side string

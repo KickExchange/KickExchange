@@ -10,9 +10,10 @@ model:
   package: model
 
 resolver:
-  layout: single-file
-  filename: internal/graphql/resolver.go
+  layout: follow-schema
+  dir: internal/graphql
   package: graphql
+  filename_template: "{name}.resolvers.go"
 
 models:
   Uint64:

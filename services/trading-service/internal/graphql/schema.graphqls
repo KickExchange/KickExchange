@@ -11,10 +11,24 @@ type SubmitResult {
   rejectReason: String
 }
 
+type Asset {
+  assetId: Uint64!
+  externalId: String!
+  symbol: String!
+  displayName: String!
+  initialPrice: Float!
+}
+
 type Query {
   health: Boolean!
+  player(assetId: Uint64!): Asset
 }
 
 type Mutation {
   submitMarketOrder(assetId: Uint64!, side: Side!, shares: Int!): SubmitResult!
+  addPlayer(externalId: String!): Asset!
+}
+
+type Subscription {
+  priceUpdates(assetId: Uint64!): Float!
 }
