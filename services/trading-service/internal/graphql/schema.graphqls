@@ -30,11 +30,44 @@ type PlayerPreview {
   shirtNumber: String!
 }
 
+type Transfer {
+  date: String!
+  season: String!
+  clubFromName: String!
+  clubToName: String!
+  marketValue: Int!
+}
+
+type PlayerProfile {
+  externalId: String!
+  name: String!
+  description: String!
+  nameInHomeCountry: String!
+  imageUrl: String!
+  placeOfBirthCity: String!
+  placeOfBirthCountry: String!
+  height: Int!
+  citizenship: [String!]!
+  position: String!
+  positionOther: [String!]!
+  foot: String!
+  shirtNumber: String!
+  clubName: String!
+  clubJoined: String!
+  clubContractExpires: String!
+  marketValue: Int!
+  agentName: String!
+  outfitter: String!
+  socialMedia: [String!]!
+  transfers: [Transfer!]!
+}
+
 type Query {
   health: Boolean!
   player(assetId: Uint64!): Asset
   searchAssets(query: String!): [Asset!]!
   previewPlayer(query: String!): PlayerPreview
+  playerProfile(externalId: String!): PlayerProfile
 }
 
 type Mutation {

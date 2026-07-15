@@ -31,6 +31,30 @@ type PlayerPreview struct {
 	ShirtNumber   string   `json:"shirtNumber"`
 }
 
+type PlayerProfile struct {
+	ExternalID          string      `json:"externalId"`
+	Name                string      `json:"name"`
+	Description         string      `json:"description"`
+	NameInHomeCountry   string      `json:"nameInHomeCountry"`
+	ImageURL            string      `json:"imageUrl"`
+	PlaceOfBirthCity    string      `json:"placeOfBirthCity"`
+	PlaceOfBirthCountry string      `json:"placeOfBirthCountry"`
+	Height              int         `json:"height"`
+	Citizenship         []string    `json:"citizenship"`
+	Position            string      `json:"position"`
+	PositionOther       []string    `json:"positionOther"`
+	Foot                string      `json:"foot"`
+	ShirtNumber         string      `json:"shirtNumber"`
+	ClubName            string      `json:"clubName"`
+	ClubJoined          string      `json:"clubJoined"`
+	ClubContractExpires string      `json:"clubContractExpires"`
+	MarketValue         int         `json:"marketValue"`
+	AgentName           string      `json:"agentName"`
+	Outfitter           string      `json:"outfitter"`
+	SocialMedia         []string    `json:"socialMedia"`
+	Transfers           []*Transfer `json:"transfers"`
+}
+
 type Query struct {
 }
 
@@ -41,6 +65,14 @@ type SubmitResult struct {
 }
 
 type Subscription struct {
+}
+
+type Transfer struct {
+	Date         string `json:"date"`
+	Season       string `json:"season"`
+	ClubFromName string `json:"clubFromName"`
+	ClubToName   string `json:"clubToName"`
+	MarketValue  int    `json:"marketValue"`
 }
 
 type Side string

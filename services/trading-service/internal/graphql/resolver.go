@@ -91,3 +91,43 @@ func toModelPlayerPreview(p transfermarkt.PlayerProfile) *model.PlayerPreview {
 		ShirtNumber:   p.ShirtNumber,
 	}
 }
+
+func toModelPlayerProfile(
+	p transfermarkt.FullProfile,
+	transfers []transfermarkt.Transfer,
+) *model.PlayerProfile {
+	transfersOut := make([]*model.Transfer, len(transfers))
+	for i, t := range transfers {
+		transfersOut[i] = &model.Transfer{
+			Date:         t.Date,
+			Season:       t.Season,
+			ClubFromName: t.ClubFromName,
+			ClubToName:   t.ClubToName,
+			MarketValue:  int(t.MarketValue),
+		}
+	}
+
+	return &model.PlayerProfile{
+		ExternalID:          p.ExternalID,
+		Name:                p.Name,
+		Description:         p.Description,
+		NameInHomeCountry:   p.NameInHomeCountry,
+		ImageURL:            p.ImageURL,
+		PlaceOfBirthCity:    p.PlaceOfBirthCity,
+		PlaceOfBirthCountry: p.PlaceOfBirthCountry,
+		Height:              p.Height,
+		Citizenship:         p.Citizenship,
+		Position:            p.Position,
+		PositionOther:       p.PositionOther,
+		Foot:                p.Foot,
+		ShirtNumber:         p.ShirtNumber,
+		ClubName:            p.ClubName,
+		ClubJoined:          p.ClubJoined,
+		ClubContractExpires: p.ClubContractExpires,
+		MarketValue:         int(p.MarketValue),
+		AgentName:           p.AgentName,
+		Outfitter:           p.Outfitter,
+		SocialMedia:         p.SocialMedia,
+		Transfers:           transfersOut,
+	}
+}

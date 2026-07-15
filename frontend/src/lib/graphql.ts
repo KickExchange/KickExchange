@@ -36,3 +36,34 @@ export interface PlayerPreview {
   nationalities: string[];
   shirtNumber: string;
 }
+
+export interface Transfer {
+  date: string;
+  season: string;
+  clubFromName: string;
+  clubToName: string;
+  marketValue: number;
+}
+
+export interface PlayerProfile {
+  externalId: string;
+  name: string;
+  description: string;
+  nameInHomeCountry: string;
+  imageUrl: string;
+  placeOfBirthCity: string;
+  placeOfBirthCountry: string;
+  height: number;
+  citizenship: string[];
+  position: string;
+  positionOther: string[];
+  foot: string;
+  shirtNumber: string;
+  clubName: string;
+  clubJoined: string;
+  clubContractExpires: string;
+  marketValue: number;
+  agentName: string;
+  outfitter: string;
+  transfers: Transfer[];
+}

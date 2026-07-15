@@ -116,6 +116,26 @@ func (r *queryResolver) PreviewPlayer(ctx context.Context, query string) (*model
 	return toModelPlayerPreview(results[0]), nil
 }
 
+// PlayerProfile is the resolver for the playerProfile field. Transfers are
+// best-effort - if they fail, we still return the core profile rather than
+// failing the whole query.
+func (r *queryResolver) PlayerProfile(ctx context.Context, externalID string) (*model.PlayerProfile, error) {
+	full, err := r.Transfer.GetFullProfile(ctx, externalID)
+	if err != nil {
+		if errors.Is(err, transfermarkt.ErrPlayerNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	transfers, err := r.Transfer.GetTransfers(ctx, externalID)
+	if err != nil {
+		r.Log.Warn("failed to fetch transfers", "external_id", externalID, "error", err)
+	}
+
+	return toModelPlayerProfile(full, transfers), nil
+}
+
 // PriceUpdates is the resolver for the priceUpdates field.
 func (r *subscriptionResolver) PriceUpdates(ctx context.Context, assetID uint64) (<-chan float64, error) {
 	ch, unsubscribe := r.Feed.Subscribe(assetID)
