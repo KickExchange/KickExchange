@@ -11,5 +11,18 @@ services:
     networks:
       - exchange-network
 
+  trading-service:
+    build:
+      context: ../../services/trading-service
+    container_name: trading-service
+    environment:
+      - ENGINE_HOST=matching-engine
+      - ENGINE_PORT=9000
+    depends_on:
+      - matching-engine
+    restart: unless-stopped
+    networks:
+      - exchange-network
+
 networks:
   exchange-network:
