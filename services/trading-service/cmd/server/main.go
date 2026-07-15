@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 
 	"kickexchange/trading-service/internal/assets"
@@ -18,9 +17,23 @@ import (
 	"kickexchange/trading-service/internal/db"
 	"kickexchange/trading-service/internal/engineclient"
 	graphqlapi "kickexchange/trading-service/internal/graphql"
-	"kickexchange/trading-service/internal/graphql/generated"
 	"kickexchange/trading-service/internal/pricefeed"
 )
+
+// cors allows the frontend (a different origin) to call /graphql - no
+// auth/session state exists yet for a stricter policy to protect.
+func cors(origin string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
 func main() {
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
@@ -61,13 +74,13 @@ func main() {
 
 	assetsRepo := assets.NewRepository(pool)
 	resolver := graphqlapi.NewResolver(client, assetsRepo, feed, cfg, log)
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+	srv := graphqlapi.NewServer(resolver)
 
 	mux := http.NewServeMux()
 	mux.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
 	mux.Handle("/graphql", srv)
 
-	httpServer := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPPort), Handler: mux}
+	httpServer := &http.Server{Addr: fmt.Sprintf(":%d", cfg.HTTPPort), Handler: cors(cfg.FrontendOrigin, mux)}
 	go func() {
 		log.Info("graphql server listening", "port", cfg.HTTPPort)
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

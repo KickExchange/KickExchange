@@ -21,6 +21,7 @@ type Config struct {
 	DBName     string
 
 	TransfermarktAPIURL string
+	FrontendOrigin      string
 }
 
 func Load() Config {
@@ -38,6 +39,7 @@ func Load() Config {
 		DBName:     getEnv("DB_NAME", "trading"),
 
 		TransfermarktAPIURL: getEnv("TRANSFERMARKT_API_URL", "http://transfermarkt-api:8000"),
+		FrontendOrigin:      getEnv("FRONTEND_ORIGIN", "http://localhost:3000"),
 	}
 }
 

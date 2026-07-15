@@ -64,3 +64,25 @@ func toModelAsset(a assets.Asset) *model.Asset {
 		InitialPrice: a.InitialPrice,
 	}
 }
+
+// isNumericID reports whether query looks like a transfermarkt id (all
+// digits) rather than a name to search for.
+func isNumericID(query string) bool {
+	if query == "" {
+		return false
+	}
+	for _, r := range query {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func toModelPlayerPreview(p transfermarkt.PlayerProfile) *model.PlayerPreview {
+	return &model.PlayerPreview{
+		ExternalID:  p.ExternalID,
+		Name:        p.Name,
+		MarketValue: int(p.MarketValue),
+	}
+}

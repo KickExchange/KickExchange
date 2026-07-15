@@ -19,9 +19,17 @@ type Asset {
   initialPrice: Float!
 }
 
+type PlayerPreview {
+  externalId: String!
+  name: String!
+  marketValue: Int!
+}
+
 type Query {
   health: Boolean!
   player(assetId: Uint64!): Asset
+  searchAssets(query: String!): [Asset!]!
+  previewPlayer(query: String!): PlayerPreview
 }
 
 type Mutation {

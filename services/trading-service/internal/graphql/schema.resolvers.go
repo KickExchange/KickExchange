@@ -13,6 +13,7 @@ import (
 	"kickexchange/trading-service/internal/engineclient"
 	"kickexchange/trading-service/internal/graphql/generated"
 	"kickexchange/trading-service/internal/graphql/model"
+	"kickexchange/trading-service/internal/transfermarkt"
 )
 
 // SubmitMarketOrder is the resolver for the submitMarketOrder field.
@@ -73,6 +74,46 @@ func (r *queryResolver) Player(ctx context.Context, assetID uint64) (*model.Asse
 		return nil, err
 	}
 	return toModelAsset(a), nil
+}
+
+// SearchAssets is the resolver for the searchAssets field. Only ever
+// returns assets already in our own table, per query design - this is what
+// makes home page search show tradable players only.
+func (r *queryResolver) SearchAssets(ctx context.Context, query string) ([]*model.Asset, error) {
+	list, err := r.Assets.Search(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.Asset, len(list))
+	for i, a := range list {
+		out[i] = toModelAsset(a)
+	}
+	return out, nil
+}
+
+// PreviewPlayer is the resolver for the previewPlayer field. Numeric query
+// is treated as a transfermarkt id (direct profile lookup); anything else
+// searches by name and returns the top match.
+func (r *queryResolver) PreviewPlayer(ctx context.Context, query string) (*model.PlayerPreview, error) {
+	if isNumericID(query) {
+		profile, err := r.Transfer.GetPlayerProfile(ctx, query)
+		if err != nil {
+			if errors.Is(err, transfermarkt.ErrPlayerNotFound) {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return toModelPlayerPreview(profile), nil
+	}
+
+	results, err := r.Transfer.SearchPlayers(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return nil, nil
+	}
+	return toModelPlayerPreview(results[0]), nil
 }
 
 // PriceUpdates is the resolver for the priceUpdates field.
