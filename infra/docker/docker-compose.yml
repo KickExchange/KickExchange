@@ -11,6 +11,31 @@ services:
     networks:
       - exchange-network
 
+  transfermarkt-api:
+    build:
+      context: https://github.com/felipeall/transfermarkt-api.git
+    container_name: transfermarkt-api
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - exchange-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=trading
+      - POSTGRES_PASSWORD=trading
+      - POSTGRES_DB=trading
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - exchange-network
+
   trading-service:
     build:
       context: ../../services/trading-service
@@ -18,13 +43,24 @@ services:
     environment:
       - ENGINE_HOST=matching-engine
       - ENGINE_PORT=9000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=trading
+      - DB_PASSWORD=trading
+      - DB_NAME=trading
+      - TRANSFERMARKT_API_URL=http://transfermarkt-api:8000
     ports:
       - "8080:8080"
     depends_on:
       - matching-engine
+      - postgres
+      - transfermarkt-api
     restart: unless-stopped
     networks:
       - exchange-network
 
 networks:
   exchange-network:
+
+volumes:
+  postgres-data:

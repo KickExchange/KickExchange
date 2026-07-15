@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -12,6 +13,14 @@ type Config struct {
 	HeartbeatInterval time.Duration
 	ProtocolVersion   uint32
 	HTTPPort          int
+
+	DBHost     string
+	DBPort     int
+	DBUser     string
+	DBPassword string
+	DBName     string
+
+	TransfermarktAPIURL string
 }
 
 func Load() Config {
@@ -21,7 +30,28 @@ func Load() Config {
 		HeartbeatInterval: getEnvDuration("HEARTBEAT_INTERVAL", 5*time.Second),
 		ProtocolVersion:   uint32(getEnvInt("PROTOCOL_VERSION", 1)),
 		HTTPPort:          getEnvInt("HTTP_PORT", 8080),
+
+		DBHost:     getEnv("DB_HOST", "postgres"),
+		DBPort:     getEnvInt("DB_PORT", 5432),
+		DBUser:     getEnv("DB_USER", "trading"),
+		DBPassword: getEnv("DB_PASSWORD", "trading"),
+		DBName:     getEnv("DB_NAME", "trading"),
+
+		TransfermarktAPIURL: getEnv("TRANSFERMARKT_API_URL", "http://transfermarkt-api:8000"),
 	}
+}
+
+// DSN builds a Postgres connection string from the DB_* fields.
+func (c Config) DSN() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName)
+}
+
+// MigrateDSN is the same connection, using the scheme golang-migrate's
+// pgx/v5 driver registers itself under.
+func (c Config) MigrateDSN() string {
+	return fmt.Sprintf("pgx5://%s:%s@%s:%d/%s?sslmode=disable",
+		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName)
 }
 
 func getEnv(key, def string) string {

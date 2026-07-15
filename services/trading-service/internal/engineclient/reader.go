@@ -7,8 +7,10 @@ import (
 )
 
 // AsyncEvent is a push message not tied to any pending request — the
-// counterparty side of a trade (request_id == 0), per session.cpp.
+// counterparty side of a trade (request_id == 0), per session.cpp. AssetID
+// comes from the message header since neither payload carries it.
 type AsyncEvent struct {
+	AssetID   uint64
 	Executed  *ExecutedPayload
 	OrderDone *OrderDonePayload
 }
@@ -66,13 +68,13 @@ func runReader(conn net.Conn, pending *pendingTable, onAsync func(AsyncEvent), l
 			// either the counterparty's (request_id==0) or a later fill on
 			// an order this connection already got Accepted for.
 			p := decodeExecuted(payload)
-			dispatchAsyncEvent(onAsync, AsyncEvent{Executed: &p}, log, "executed", p.OrderID)
+			dispatchAsyncEvent(onAsync, AsyncEvent{AssetID: h.AssetID, Executed: &p}, log, "executed", p.OrderID)
 		case MsgOrderDone:
 			p := decodeOrderDone(payload)
 			if pending.onOrderDone(h.RequestID, p) {
 				continue // Cancel's synchronous response
 			}
-			dispatchAsyncEvent(onAsync, AsyncEvent{OrderDone: &p}, log, "order done", p.OrderID)
+			dispatchAsyncEvent(onAsync, AsyncEvent{AssetID: h.AssetID, OrderDone: &p}, log, "order done", p.OrderID)
 		default:
 			log.Warn("unexpected message type from engine", "msg_type", h.MsgType)
 		}
