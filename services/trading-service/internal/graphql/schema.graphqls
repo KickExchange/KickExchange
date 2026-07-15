@@ -1,0 +1,20 @@
+scalar Uint64
+
+enum Side {
+  BUY
+  SELL
+}
+
+type SubmitResult {
+  orderId: Uint64!
+  accepted: Boolean!
+  rejectReason: String
+}
+
+type Query {
+  health: Boolean!
+}
+
+type Mutation {
+  submitMarketOrder(assetId: Uint64!, side: Side!, shares: Int!): SubmitResult!
+}

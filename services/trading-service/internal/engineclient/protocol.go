@@ -54,6 +54,33 @@ const (
 	RejectEngineOverloaded   RejectReason = 9
 )
 
+func (r RejectReason) String() string {
+	switch r {
+	case RejectInvalidAsset:
+		return "invalid_asset"
+	case RejectUnknownOrderId:
+		return "unknown_order_id"
+	case RejectThrottled:
+		return "throttled"
+	case RejectInsufficientShares:
+		return "insufficient_shares"
+	case RejectMalformed:
+		return "malformed"
+	case RejectVersionMismatch:
+		return "version_mismatch"
+	case RejectDuplicateRequest:
+		return "duplicate_request"
+	case RejectInvalidPrice:
+		return "invalid_price"
+	case RejectInvalidQuantity:
+		return "invalid_quantity"
+	case RejectEngineOverloaded:
+		return "engine_overloaded"
+	default:
+		return fmt.Sprintf("unknown_reject_reason(%d)", uint8(r))
+	}
+}
+
 type FinalStatus uint8
 
 const (
