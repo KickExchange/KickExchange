@@ -20,6 +20,12 @@ type Asset struct {
 type Mutation struct {
 }
 
+type PlayerPreview struct {
+	ExternalID  string `json:"externalId"`
+	Name        string `json:"name"`
+	MarketValue int    `json:"marketValue"`
+}
+
 type Query struct {
 }
 

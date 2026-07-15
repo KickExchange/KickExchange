@@ -50,9 +50,17 @@ type ComplexityRoot struct {
 		SubmitMarketOrder func(childComplexity int, assetID uint64, side model.Side, shares int) int
 	}
 
+	PlayerPreview struct {
+		ExternalID  func(childComplexity int) int
+		MarketValue func(childComplexity int) int
+		Name        func(childComplexity int) int
+	}
+
 	Query struct {
-		Health func(childComplexity int) int
-		Player func(childComplexity int, assetID uint64) int
+		Health        func(childComplexity int) int
+		Player        func(childComplexity int, assetID uint64) int
+		PreviewPlayer func(childComplexity int, query string) int
+		SearchAssets  func(childComplexity int, query string) int
 	}
 
 	SubmitResult struct {
@@ -77,6 +85,8 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Health(ctx context.Context) (bool, error)
 	Player(ctx context.Context, assetID uint64) (*model.Asset, error)
+	SearchAssets(ctx context.Context, query string) ([]*model.Asset, error)
+	PreviewPlayer(ctx context.Context, query string) (*model.PlayerPreview, error)
 }
 type SubscriptionResolver interface {
 	PriceUpdates(ctx context.Context, assetID uint64) (<-chan float64, error)
@@ -154,6 +164,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.SubmitMarketOrder(childComplexity, args["assetId"].(uint64), args["side"].(model.Side), args["shares"].(int)), true
 
+	case "PlayerPreview.externalId":
+		if e.ComplexityRoot.PlayerPreview.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.ExternalID(childComplexity), true
+	case "PlayerPreview.marketValue":
+		if e.ComplexityRoot.PlayerPreview.MarketValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.MarketValue(childComplexity), true
+	case "PlayerPreview.name":
+		if e.ComplexityRoot.PlayerPreview.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PlayerPreview.Name(childComplexity), true
+
 	case "Query.health":
 		if e.ComplexityRoot.Query.Health == nil {
 			break
@@ -172,6 +201,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Player(childComplexity, args["assetId"].(uint64)), true
+	case "Query.previewPlayer":
+		if e.ComplexityRoot.Query.PreviewPlayer == nil {
+			break
+		}
+
+		args, err := ec.field_Query_previewPlayer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.PreviewPlayer(childComplexity, args["query"].(string)), true
+	case "Query.searchAssets":
+		if e.ComplexityRoot.Query.SearchAssets == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchAssets_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SearchAssets(childComplexity, args["query"].(string)), true
 
 	case "SubmitResult.accepted":
 		if e.ComplexityRoot.SubmitResult.Accepted == nil {
@@ -324,9 +375,17 @@ type Asset {
   initialPrice: Float!
 }
 
+type PlayerPreview {
+  externalId: String!
+  name: String!
+  marketValue: Int!
+}
+
 type Query {
   health: Boolean!
   player(assetId: Uint64!): Asset
+  searchAssets(query: String!): [Asset!]!
+  previewPlayer(query: String!): PlayerPreview
 }
 
 type Mutation {
@@ -359,6 +418,18 @@ func (ec *executionContext) childFields_Asset(ctx context.Context, field graphql
 		return ec.fieldContext_Asset_initialPrice(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
+}
+
+func (ec *executionContext) childFields_PlayerPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "externalId":
+		return ec.fieldContext_PlayerPreview_externalId(ctx, field)
+	case "name":
+		return ec.fieldContext_PlayerPreview_name(ctx, field)
+	case "marketValue":
+		return ec.fieldContext_PlayerPreview_marketValue(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PlayerPreview", field.Name)
 }
 
 func (ec *executionContext) childFields_SubmitResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -558,6 +629,34 @@ func (ec *executionContext) field_Query_player_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["assetId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_previewPlayer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "query",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["query"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_searchAssets_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "query",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["query"] = arg0
 	return args, nil
 }
 
@@ -838,6 +937,75 @@ func (ec *executionContext) fieldContext_Mutation_addPlayer(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _PlayerPreview_externalId(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_externalId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_externalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PlayerPreview_name(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _PlayerPreview_marketValue(ctx context.Context, field graphql.CollectedField, obj *model.PlayerPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PlayerPreview_marketValue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MarketValue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PlayerPreview_marketValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PlayerPreview", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -899,6 +1067,94 @@ func (ec *executionContext) fieldContext_Query_player(ctx context.Context, field
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_player_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchAssets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_searchAssets(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SearchAssets(ctx, fc.Args["query"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Asset) graphql.Marshaler {
+			return ec.marshalNAsset2ᚕᚖkickexchangeᚋtradingᚑserviceᚋinternalᚋgraphqlᚋmodelᚐAssetᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_searchAssets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Asset(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchAssets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_previewPlayer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_previewPlayer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().PreviewPlayer(ctx, fc.Args["query"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.PlayerPreview) graphql.Marshaler {
+			return ec.marshalOPlayerPreview2ᚖkickexchangeᚋtradingᚑserviceᚋinternalᚋgraphqlᚋmodelᚐPlayerPreview(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_previewPlayer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PlayerPreview(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_previewPlayer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2274,6 +2530,54 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var playerPreviewImplementors = []string{"PlayerPreview"}
+
+func (ec *executionContext) _PlayerPreview(ctx context.Context, sel ast.SelectionSet, obj *model.PlayerPreview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, playerPreviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PlayerPreview")
+		case "externalId":
+			out.Values[i] = ec._PlayerPreview_externalId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._PlayerPreview_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "marketValue":
+			out.Values[i] = ec._PlayerPreview_marketValue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2326,6 +2630,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_player(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "searchAssets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchAssets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "previewPlayer":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_previewPlayer(ctx, field)
 				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2837,6 +3185,22 @@ func (ec *executionContext) marshalNAsset2kickexchangeᚋtradingᚑserviceᚋint
 	return ec._Asset(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNAsset2ᚕᚖkickexchangeᚋtradingᚑserviceᚋinternalᚋgraphqlᚋmodelᚐAssetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Asset) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAsset2ᚖkickexchangeᚋtradingᚑserviceᚋinternalᚋgraphqlᚋmodelᚐAsset(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNAsset2ᚖkickexchangeᚋtradingᚑserviceᚋinternalᚋgraphqlᚋmodelᚐAsset(ctx context.Context, sel ast.SelectionSet, v *model.Asset) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -3126,6 +3490,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOPlayerPreview2ᚖkickexchangeᚋtradingᚑserviceᚋinternalᚋgraphqlᚋmodelᚐPlayerPreview(ctx context.Context, sel ast.SelectionSet, v *model.PlayerPreview) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PlayerPreview(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

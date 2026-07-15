@@ -56,6 +56,35 @@ func (r *Repository) Create(ctx context.Context, externalID, symbol, displayName
 	return a, nil
 }
 
+// Search matches display_name or symbol against query, most recently
+// added first. Only ever returns assets that exist in our own table - this
+// is what makes home page search only show tradable players.
+func (r *Repository) Search(ctx context.Context, query string) ([]Asset, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT asset_id, external_id, symbol, display_name, initial_price FROM assets
+		 WHERE display_name ILIKE '%' || $1 || '%' OR symbol ILIKE '%' || $1 || '%'
+		 ORDER BY asset_id DESC LIMIT 20`,
+		query,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("assets: search: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Asset
+	for rows.Next() {
+		var a Asset
+		if err := rows.Scan(&a.AssetID, &a.ExternalID, &a.Symbol, &a.DisplayName, &a.InitialPrice); err != nil {
+			return nil, fmt.Errorf("assets: search scan: %w", err)
+		}
+		out = append(out, a)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("assets: search rows: %w", err)
+	}
+	return out, nil
+}
+
 func (r *Repository) GetByAssetID(ctx context.Context, assetID uint64) (Asset, error) {
 	var a Asset
 	err := r.pool.QueryRow(ctx,

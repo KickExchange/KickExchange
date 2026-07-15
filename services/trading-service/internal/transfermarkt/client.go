@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -28,8 +29,8 @@ func New(baseURL string) *Client {
 }
 
 func (c *Client) GetPlayerProfile(ctx context.Context, externalID string) (PlayerProfile, error) {
-	url := fmt.Sprintf("%s/players/%s/profile", c.baseURL, externalID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	reqURL := fmt.Sprintf("%s/players/%s/profile", c.baseURL, externalID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return PlayerProfile{}, fmt.Errorf("transfermarkt: build request: %w", err)
 	}
@@ -57,4 +58,41 @@ func (c *Client) GetPlayerProfile(ctx context.Context, externalID string) (Playe
 	}
 
 	return PlayerProfile{ExternalID: raw.ID, Name: raw.Name, MarketValue: raw.MarketValue}, nil
+}
+
+// SearchPlayers looks players up by name, most relevant match first per
+// transfermarkt's own ranking.
+func (c *Client) SearchPlayers(ctx context.Context, name string) ([]PlayerProfile, error) {
+	reqURL := fmt.Sprintf("%s/players/search/%s?page_number=1", c.baseURL, url.PathEscape(name))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("transfermarkt: build request: %w", err)
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("transfermarkt: request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("transfermarkt: unexpected status %d", resp.StatusCode)
+	}
+
+	var raw struct {
+		Results []struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			MarketValue int64  `json:"marketValue"`
+		} `json:"results"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return nil, fmt.Errorf("transfermarkt: decode response: %w", err)
+	}
+
+	profiles := make([]PlayerProfile, len(raw.Results))
+	for i, r := range raw.Results {
+		profiles[i] = PlayerProfile{ExternalID: r.ID, Name: r.Name, MarketValue: r.MarketValue}
+	}
+	return profiles, nil
 }
